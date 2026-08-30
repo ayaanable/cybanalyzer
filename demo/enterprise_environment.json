@@ -1,0 +1,51 @@
+{
+  "id": "demo-acme", "name": "Acme simulated enterprise",
+  "nodes": [
+    {"id":"internet","name":"Internet","type":"Internet","kind":"special","criticality":1,"properties":{"publicly_reachable":true}},
+    {"id":"dmz","name":"DMZ","type":"Network zone","kind":"special","criticality":3,"properties":{}},
+    {"id":"web01","name":"Public Web Server","type":"Web application","criticality":7,"description":"Public customer portal","properties":{"zone":"DMZ","publicly_reachable":true}},
+    {"id":"vpn01","name":"VPN Gateway","type":"Server","criticality":6,"properties":{"zone":"DMZ","publicly_reachable":true}},
+    {"id":"app01","name":"Application Server","type":"Server","criticality":8,"properties":{"zone":"Internal"}},
+    {"id":"db01","name":"Customer Database","type":"Database","criticality":10,"properties":{"zone":"Data"}},
+    {"id":"files01","name":"File Server","type":"Storage","criticality":8,"properties":{"zone":"Internal"}},
+    {"id":"internal01","name":"Operations Server","type":"Server","criticality":7,"properties":{"zone":"Internal"}},
+    {"id":"ws-alex","name":"Alex Workstation","type":"Workstation","criticality":4,"properties":{"zone":"User"}},
+    {"id":"ws-finance","name":"Finance Workstation","type":"Workstation","criticality":6,"properties":{"zone":"User"}},
+    {"id":"container01","name":"Payments Container","type":"Container","criticality":8,"properties":{"zone":"Internal"}},
+    {"id":"backup01","name":"Backup Storage","type":"Storage","criticality":9,"properties":{"zone":"Data"}},
+    {"id":"svc-web","name":"svc_web","type":"Service account","kind":"identity","criticality":6,"properties":{}},
+    {"id":"svc-backup","name":"svc_backup","type":"Service account","kind":"identity","criticality":7,"properties":{}},
+    {"id":"alex","name":"Alex Chen","type":"User","kind":"identity","criticality":3,"properties":{}},
+    {"id":"db-admin","name":"DB Administrator","type":"Administrator","kind":"identity","criticality":10,"properties":{}},
+    {"id":"domain-admin","name":"Domain Administrator","type":"Administrator","kind":"identity","criticality":10,"properties":{}},
+    {"id":"finance-role","name":"Finance IAM Role","type":"IAM role","kind":"identity","criticality":8,"properties":{}}
+  ],
+  "relationships": [
+    {"id":"r1","source":"internet","target":"web01","type":"NETWORK_ACCESS","difficulty":10,"description":"HTTPS exposed; initial control requires simulated RCE","properties":{"requires_vulnerability":"v1"}},
+    {"id":"r2","source":"internet","target":"vpn01","type":"NETWORK_ACCESS","difficulty":7,"description":"VPN exposed","properties":{}},
+    {"id":"r3","source":"web01","target":"app01","type":"NETWORK_ACCESS","difficulty":8,"description":"API connection","properties":{}},
+    {"id":"r4","source":"web01","target":"svc-web","type":"CAN_USE","difficulty":9,"description":"Application runtime identity","properties":{}},
+    {"id":"r5","source":"svc-web","target":"app01","type":"CAN_LOGIN","difficulty":8,"description":"Service login","properties":{}},
+    {"id":"r6","source":"svc-web","target":"db01","type":"CAN_WRITE","difficulty":9,"description":"Overprivileged database access","properties":{"excessive_permission":true}},
+    {"id":"r7","source":"app01","target":"internal01","type":"NETWORK_ACCESS","difficulty":7,"description":"Management channel","properties":{}},
+    {"id":"r8","source":"internal01","target":"domain-admin","type":"PRIVILEGE_ESCALATION","difficulty":8,"description":"Unpatched local escalation","properties":{}},
+    {"id":"r9","source":"vpn01","target":"ws-alex","type":"CAN_LOGIN","difficulty":6,"description":"Remote user access","properties":{}},
+    {"id":"r10","source":"ws-alex","target":"alex","type":"CAN_USE","difficulty":8,"description":"Cached user session","properties":{}},
+    {"id":"r11","source":"alex","target":"files01","type":"CAN_READ","difficulty":8,"description":"Team share","properties":{}},
+    {"id":"r12","source":"files01","target":"svc-backup","type":"CAN_USE","difficulty":7,"description":"Backup credential stored in share","properties":{}},
+    {"id":"r13","source":"svc-backup","target":"backup01","type":"ADMIN_ACCESS","difficulty":9,"description":"Backup administration","properties":{"excessive_permission":true}},
+    {"id":"r14","source":"app01","target":"container01","type":"CAN_EXECUTE","difficulty":8,"description":"Container deployment token","properties":{}},
+    {"id":"r15","source":"container01","target":"finance-role","type":"CAN_ASSUME","difficulty":8,"description":"Cloud workload role","properties":{}},
+    {"id":"r16","source":"finance-role","target":"db01","type":"CAN_ACCESS","difficulty":7,"description":"Reporting access","properties":{}},
+    {"id":"r17","source":"db-admin","target":"db01","type":"ADMIN_ACCESS","difficulty":10,"description":"Database administration","properties":{}},
+    {"id":"r18","source":"domain-admin","target":"files01","type":"ADMIN_ACCESS","difficulty":10,"description":"Domain administrative control","properties":{}}
+  ],
+  "vulnerabilities": [
+    {"id":"v1","asset_id":"web01","name":"Simulated Remote Code Execution","description":"Public-facing application flaw","severity":9.4,"exploitability":9,"allows_initial_access":true,"mitre_technique":"T1190 - Exploit Public-Facing Application"},
+    {"id":"v2","asset_id":"app01","name":"Deserialization flaw","description":"Internal remote execution route","severity":8.1,"exploitability":7,"allows_initial_access":false,"mitre_technique":"T1059 - Command and Scripting Interpreter"},
+    {"id":"v3","asset_id":"internal01","name":"Local privilege escalation","description":"Unpatched kernel","severity":8.8,"exploitability":8,"allows_initial_access":false,"allows_privilege_escalation":true,"mitre_technique":"T1068 - Exploitation for Privilege Escalation"},
+    {"id":"v4","asset_id":"vpn01","name":"Weak MFA enrollment policy","description":"Simulated identity weakness","severity":7.2,"exploitability":6,"allows_initial_access":true,"mitre_technique":"T1078 - Valid Accounts"},
+    {"id":"v5","asset_id":"ws-alex","name":"Macro payload execution","description":"Simulated phishing exposure","severity":6.8,"exploitability":7,"allows_initial_access":true,"mitre_technique":"T1204 - User Execution"},
+    {"id":"v6","asset_id":"container01","name":"Container escape configuration","description":"Overly permissive runtime","severity":7.9,"exploitability":6,"allows_privilege_escalation":true,"mitre_technique":"T1611 - Escape to Host"}
+  ]
+}

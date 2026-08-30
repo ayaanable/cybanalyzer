@@ -1,0 +1,12 @@
+create extension if not exists "pgcrypto";
+create table public.profiles (id uuid primary key references auth.users(id) on delete cascade, display_name text, created_at timestamptz default now());
+create table public.environments (id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete cascade, name text not null, description text, graph jsonb not null default '{}'::jsonb, created_at timestamptz default now(), updated_at timestamptz default now());
+create table public.analysis_runs (id uuid primary key default gen_random_uuid(), environment_id uuid not null references public.environments(id) on delete cascade, user_id uuid not null references auth.users(id) on delete cascade, parameters jsonb not null, summary jsonb not null, created_at timestamptz default now());
+create table public.attack_paths (id uuid primary key default gen_random_uuid(), analysis_run_id uuid not null references public.analysis_runs(id) on delete cascade, risk_score int not null check (risk_score between 0 and 100), severity text not null, node_ids jsonb not null, relationship_ids jsonb not null, techniques jsonb not null default '[]'::jsonb, explanation text not null);
+create table public.recommendations (id uuid primary key default gen_random_uuid(), analysis_run_id uuid not null references public.analysis_runs(id) on delete cascade, priority text not null, recommendation_type text not null, reference_id text, text text not null);
+alter table public.profiles enable row level security; alter table public.environments enable row level security; alter table public.analysis_runs enable row level security; alter table public.attack_paths enable row level security; alter table public.recommendations enable row level security;
+create policy "own profile" on public.profiles for all using (id = auth.uid()) with check (id = auth.uid());
+create policy "own environments" on public.environments for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy "own analysis runs" on public.analysis_runs for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy "own paths through run" on public.attack_paths for all using (exists(select 1 from public.analysis_runs r where r.id=analysis_run_id and r.user_id=auth.uid()));
+create policy "own recommendations through run" on public.recommendations for all using (exists(select 1 from public.analysis_runs r where r.id=analysis_run_id and r.user_id=auth.uid()));
