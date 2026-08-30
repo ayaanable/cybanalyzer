@@ -1,0 +1,15 @@
+{
+  "name": "attackpathx",
+  "private": true,
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm --prefix frontend run dev -- --host 0.0.0.0 --port 5173\" \"uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port 8000 --reload\"",
+    "build": "npm --prefix frontend run build",
+    "start": "uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port 8000"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

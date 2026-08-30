@@ -5,13 +5,15 @@ AttackPathX is a simulated-enterprise attack path analysis platform. It never sc
 ## Run locally
 
 ```bash
-cd backend && python -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/uvicorn app.main:app --reload
-# separately
-cd ../frontend && npm install && npm run dev
+python -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
+pip install -r backend/requirements.txt
+npm install
+npm run dev
 ```
 
-Open `http://localhost:5173`. The UI loads a 18-node simulated environment from `demo/enterprise_environment.json` and calls the API at `http://localhost:8000`.
+This starts the Vite frontend on `http://localhost:5173` and the FastAPI backend on `http://localhost:8000`. The frontend uses same-origin `/api/...` requests in production and the Vite proxy in development, so no hardcoded localhost URLs are needed in client code.
 
 ## Risk model
 
